@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network Testing Tool</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0a0d17;
+      color: #edf2ff;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .container {
+      width: min(520px, 100%);
+      background: rgba(17, 22, 36, 0.95);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 18px 45px rgba(0,0,0,0.45);
+      padding: 30px 28px;
+    }
+    h1 {
+      margin: 0 0 24px;
+      text-align: center;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      color: #ff5f6d;
+      letter-spacing: 0.03em;
+    }
+    .input-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #c9d0e3;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+    }
+    input, select {
+      width: 100%;
+      background: #121a2b;
+      border: 1px solid #24304d;
+      border-radius: 10px;
+      color: #f1f5ff;
+      font-size: 1rem;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus, select:focus {
+      border-color: #ff5f6d;
+      box-shadow: 0 0 0 3px rgba(255,95,109,0.12);
+    }
+    .row {
+      display: flex;
+      gap: 16px;
+    }
+    .row .input-group {
+      flex: 1;
+    }
+    .button-row {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0 22px;
+    }
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 16px 18px;
+      transition: transform 0.18s ease, filter 0.2s ease, background 0.2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+    .btn-start {
+      background: linear-gradient(135deg, #1f5fb8, #2e6fe0);
+    }
+    .btn-start.active {
+      background: linear-gradient(135deg, #ff4d59, #ff6b6b);
+      box-shadow: 0 0 18px rgba(255,93,109,0.35);
+    }
+    .btn-stop {
+      background: linear-gradient(135deg, #40495a, #58657f);
+      color: #dde6ff;
+    }
+    .stats {
+      background: rgba(18, 27, 44, 0.98);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 14px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      flex: 1;
+      text-align: center;
+    }
+    .stat-value {
+      color: #ff7b88;
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+    .stat-label {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8ea1c7;
+    }
+    .status-bar {
+      border-radius: 10px;
+      padding: 12px 14px;
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 14px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .status-idle {
+      background: rgba(27, 67, 42, 0.35);
+      color: #a4f5bf;
+      border: 1px solid rgba(80, 208, 118, 0.2);
+    }
+    .status-running {
+      background: rgba(96, 39, 39, 0.38);
+      color: #ffafb3;
+      border: 1px solid rgba(255, 118, 129, 0.28);
+    }
+    .log-wrap {
+      margin-top: 10px;
+    }
+    .log-wrap label {
+      display: block;
+      margin-bottom: 8px;
+    }
+    #log {
+      background: #0d1220;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      height: 180px;
+      overflow-y: auto;
+      padding: 12px 10px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #dfe8ff;
+    }
+    #log div {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    #log div:last-child {
+      border-bottom: none;
+    }
+    @media (max-width: 520px) {
+      .row {
+        flex-direction: column;
+      }
+      .button-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Network Tool</h1>
+
+    <div class="input-group">
+      <label for="target">Target</label>
+      <input id="target" type="text" placeholder="example.com or 192.168.1.1" />
+    </div>
+
+    <div class="row">
+      <div class="input-group">
+        <label for="port">Port</label>
+        <input id="port" type="number" min="1" max="65535" value="80" />
+      </div>
+      <div class="input-group">
+        <label for="method">Method</label>
+        <select id="method">
+          <option value="udp">UDP</option>
+          <option value="tcp">TCP</option>
+          <option value="http">HTTP</option>
+          <option value="slow">Slow</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="input-group">
+        <label for="duration">Duration (seconds)</label>
+        <input id="duration" type="number" min="1" max="3600" value="60" />
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button id="startBtn" class="btn btn-start" type="button">Start</button>
+      <button id="stopBtn" class="btn btn-stop" type="button">Stop</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div id="packetCount" class="stat-value">0</div>
+        <div class="stat-label">Packets</div>
+      </div>
+      <div class="stat">
+        <div id="activeWorkers" class="stat-value">0</div>
+        <div class="stat-label">Workers</div>
+      </div>
+      <div class="stat">
+        <div id="elapsed" class="stat-value">0s</div>
+        <div class="stat-label">Elapsed</div>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar status-idle">Idle - Ready to test</div>
+
+    <div class="log-wrap">
+      <label for="log">Results</label>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const logEl = document.getElementById('log');
+    const statusBar = document.getElementById('statusBar');
+    const packetCountEl = document.getElementById('packetCount');
+    const activeWorkersEl = document.getElementById('activeWorkers');
+    const elapsedEl = document.getElementById('elapsed');
+    let pollingHandle = null;
+
+    function appendLog(message) {
+      const row = document.createElement('div');
+      row.textContent = message;
+      logEl.appendChild(row);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStatus(active, text) {
+      statusBar.className = active ? 'status-bar status-running' : 'status-bar status-idle';
+      statusBar.textContent = text;
+    }
+
+    function setRunning(active) {
+      startBtn.classList.toggle('active', active);
+      startBtn.textContent = active ? 'Running' : 'Start';
+      stopBtn.disabled = !active;
+      stopBtn.style.opacity = active ? '1' : '0.6';
+    }
+
+    async function fetchStatus() {
+      try {
+        const response = await fetch('/api/status');
+        if (!response.ok) return;
+        const data = await response.json();
+
+        packetCountEl.textContent = data.packetCount || 0;
+        activeWorkersEl.textContent = data.workers || 0;
+        elapsedEl.textContent = `${data.elapsedSeconds || 0}s`;
+
+        if (data.log && data.log.length) {
+          const existing = Array.from(logEl.children).map((item) => item.textContent);
+          data.log.forEach((entry) => {
+            if (!existing.includes(entry)) {
+              appendLog(entry);
+            }
+          });
+        }
+
+        if (data.active) {
+          setRunning(true);
+          setStatus(true, `${data.method.toUpperCase()} - ${data.status}`);
+        } else {
+          setRunning(false);
+          setStatus(false, data.status === 'Completed' ? 'Completed - Test finished' : 'Idle - Ready to test');
+        }
+      } catch (error) {
+        console.error('Status fetch failed:', error);
+      }
+    }
+
+    async function startTest() {
+      const target = document.getElementById('target').value.trim();
+      const port = Number(document.getElementById('port').value) || 80;
+      const method = document.getElementById('method').value;
+      const duration = Number(document.getElementById('duration').value) || 60;
+
+      if (!target) {
+        appendLog('Please enter a target IP or domain.');
+        return;
+      }
+
+      setRunning(true);
+      setStatus(true, `Starting ${method.toUpperCase()} diagnostic`);
+      appendLog(`Launching ${method.toUpperCase()} diagnostic on ${target}:${port} for ${duration}s`);
+
+      try {
+        const response = await fetch('/api/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, port, method, duration })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Unable to start test.');
+        }
+
+        if (!pollingHandle) {
+          pollingHandle = setInterval(fetchStatus, 1000);
+        }
+      } catch (error) {
+        appendLog(`Start failed: ${error.message}`);
+        setRunning(false);
+        setStatus(false, 'Idle - Ready to test');
+      }
+    }
+
+    async function stopTest() {
+      try {
+        const response = await fetch('/api/stop', { method: 'POST' });
+        const data = await response.json();
+        appendLog(data.message || 'Stopping diagnostic.');
+        setStatus(false, 'Stopping - Please wait');
+      } catch (error) {
+        appendLog('Stop request failed.');
+      }
+    }
+
+    startBtn.addEventListener('click', startTest);
+    stopBtn.addEventListener('click', stopTest);
+
+    if (!pollingHandle) {
+      pollingHandle = setInterval(fetchStatus, 1000);
+    }
+    fetchStatus();
+  </script>
+</body>
+</html>
